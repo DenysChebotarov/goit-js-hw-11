@@ -16,6 +16,12 @@ const options = {
     page: 0,
   },
 };
+const searchForm = document.querySelector('#search-form');
+const gallery = document.querySelector('.gallery');
+const loadMoreButton = document.querySelector('.load-more')
+
+searchForm.addEventListener('submit', onSubmit);
+loadMoreButton.addEventListener('click', onLoadMoreButton);
 
 async function fetchImages(searchParams = options.params.q) {
   options.params.q = `${searchParams}`;
@@ -24,26 +30,15 @@ async function fetchImages(searchParams = options.params.q) {
   return response;
 }
 
-const searchForm = document.querySelector('#search-form');
-const gallery = document.querySelector('.gallery');
-const loadMoreButton = document.querySelector('.load-more')
-
-searchForm.addEventListener('submit', onSubmit);
-loadMoreButton.addEventListener('click', onLoadMoreButton);
-
 async function onSubmit(e) {
   e.preventDefault();
   searchQuery = e.currentTarget.elements.searchQuery.value.trim();
   if (!searchQuery.length) {
     return;
   }
-  console.log(options.params.q);
   try {
-    Notiflix.Notify.success('Слава Україні');
     clearMarkup();
     const images = await fetchImages(searchQuery);
-    loadMoreButton.classList.remove('visually-hidden')
-    console.log(images);
     if (images.data.total === 0) {
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
@@ -51,13 +46,13 @@ async function onSubmit(e) {
       return;
     }
     renderMarkup(images);
+    Notiflix.Notify.success(`Hooray! We found ${images.data.totalHits} images.`);
+    loadMoreButton.classList.remove('visually-hidden')
   } catch {
     Notiflix.Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
     );
   }
-
-  // renderMarkup();
 }
 
 function renderMarkup({ data }) {
@@ -101,10 +96,16 @@ async function onLoadMoreButton() {
   try {
     const moreImages = await fetchImages();
     renderMarkup(moreImages);
+    totalHits();
   } catch (error) {
-    console.log(error);
+    loadMoreButton.classList.add('visually-hidden');
+    Notiflix.Report.failure("We're sorry, but you've reached the end of search results.");
   }
 }
 function clearMarkup() {
+  loadMoreButton.classList.add('visually-hidden')
   gallery.innerHTML = '';
+}
+function totalHits(totalHits) {
+  const total = document.querySelectorAll('.photo-card').length;
 }
